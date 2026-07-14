@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Minecraft Pixeler</title>
+  <style>
+    :root{
+      --bg:#0f1410;
+      --panel: rgba(18, 24, 19, .78);
+      --panel-strong: rgba(17, 22, 18, .92);
+      --line: rgba(255,255,255,.08);
+      --text:#eff7ee;
+      --muted:#b3c7b3;
+      --accent:#7ee787;
+      --accent-2:#6bb6ff;
+      --danger:#ff6b6b;
+      --shadow: 0 20px 60px rgba(0,0,0,.45);
+      --radius: 24px;
+      --pixel: 10px;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at top, #243627 0%, #101611 36%, #091009 100%);
+      overflow:hidden;
+    }
+
+    body::before,
+    body::after{
+      content:"";
+      position:fixed;
+      top:0;
+      width:22vw;
+      height:100vh;
+      pointer-events:none;
+      z-index:0;
+      opacity:.8;
+      filter: blur(10px) saturate(1.1);
+      background:
+        linear-gradient(to top, #3d2b1f 0 20%, #6d4b2d 20% 24%, #2f6f31 24% 45%, #58a33f 45% 52%, #9ad66b 52% 56%, #2b5a2c 56% 100%),
+        repeating-linear-gradient(90deg,
+          rgba(0,0,0,.22) 0 12px,
+          rgba(255,255,255,.03) 12px 24px);
+      background-blend-mode: overlay;
+    }
+    body::before{left:0; border-right:1px solid rgba(255,255,255,.06)}
+    body::after{right:0; transform:scaleX(-1); border-left:1px solid rgba(255,255,255,.06)}
+
+    .app{
+      position:relative;
+      z-index:1;
+      height:100vh;
+      display:flex;
+      flex-direction:column;
+    }
+
+    .topbar{
+      padding:18px 20px 10px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+    }
+
+    .brand{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+
+    .brand h1{
+      margin:0;
+      font-size:clamp(24px, 4vw, 40px);
+      line-height:1;
+      letter-spacing:.4px;
+      text-shadow: 0 4px 18px rgba(0,0,0,.45);
+    }
+
+    .brand p{
+      margin:0;
+      color:var(--muted);
+      font-size:14px;
+    }
+
+    .top-actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+
+    .btn, .tool, .color-btn{
+      border:1px solid rgba(255,255,255,.10);
+      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.05));
+      color:var(--text);
+      border-radius:16px;
+      padding:10px 14px;
+      cursor:pointer;
+      transition:.18s transform, .18s background, .18s border-color, .18s box-shadow;
+      box-shadow: 0 10px 24px rgba(0,0,0,.18);
+      user-select:none;
+    }
+    .btn:hover, .tool:hover, .color-btn:hover{
+      transform:translateY(-1px);
+      border-color:rgba(255,255,255,.20);
+      background: linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.08));
+    }
+    .btn:active, .tool:active, .color-btn:active{
+      transform:translateY(1px);
+    }
+
+    .btn.primary{
+      background: linear-gradient(180deg, rgba(126,231,135,.24), rgba(126,231,135,.12));
+      border-color: rgba(126,231,135,.35);
+    }
+    .btn.danger{
+      background: linear-gradient(180deg, rgba(255,107,107,.22), rgba(255,107,107,.10));
+      border-color: rgba(255,107,107,.32);
+    }
+
+    .main{
+      flex:1;
+      min-height:0;
+      padding: 10px 18px 18px;
+      display:grid;
+      grid-template-columns: 240px minmax(0, 1fr) 280px;
+      gap:16px;
+    }
+
+    .panel{
+      min-height:0;
+      background: var(--panel);
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+      overflow:hidden;
+    }
+
+    .panel-header{
+      padding:14px 16px 12px;
+      border-bottom:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,0));
+    }
+
+    .panel-header h2{
+      margin:0;
+      font-size:15px;
+      letter-spacing:.35px;
+    }
+
+    .panel-header small{
+      color:var(--muted);
+    }
+
+    .panel-body{
+      padding:14px;
+      overflow:auto;
+      height:100%;
+    }
+
+    .left-col, .right-col{
+      display:flex;
+      flex-direction:column;
+      gap:16px;
+    }
+
+    .tool-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+
+    .tool.active, .btn.active{
+      border-color: rgba(126,231,135,.55);
+      box-shadow: 0 0 0 1px rgba(126,231,135,.15), 0 12px 24px rgba(0,0,0,.2);
+      background: linear-gradient(180deg, rgba(126,231,135,.22), rgba(126,231,135,.12));
+    }
+
+    .section{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+
+    .label-row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    .palette{
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap:10px;
+    }
+
+    .color-btn{
+      width:100%;
+      aspect-ratio:1;
+      padding:0;
+      position:relative;
+      overflow:hidden;
+    }
+    .color-btn::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      border-radius:14px;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.08);
+    }
+    .color-btn.active::after{
+      box-shadow: inset 0 0 0 3px rgba(255,255,255,.92);
+    }
+
+    .color-row{
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
+    input[type="color"]{
+      width:48px;
+      height:48px;
+      border:none;
+      background:transparent;
+      padding:0;
+      cursor:pointer;
+    }
+    input[type="range"]{
+      width:100%;
+    }
+    input[type="text"]{
+      width:100%;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.05);
+      color:var(--text);
+      border-radius:14px;
+      padding:11px 12px;
+      outline:none;
+    }
+
+    .stage{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      min-height:0;
+      position:relative;
+      padding:18px;
+    }
+
+    .editor-shell{
+      width:min(100%, 820px);
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:14px;
+      align-items:center;
+      justify-items:center;
+    }
+
+    .editor-card{
+      width:100%;
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:14px;
+      justify-items:center;
+      padding:18px;
+      background: var(--panel-strong);
+      border:1px solid var(--line);
+      border-radius: 30px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+
+    .canvas-wrap{
+      width:100%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      position:relative;
+    }
+
+    .canvas-holder{
+      position:relative;
+      display:inline-block;
+      border-radius: 20px;
+      padding:12px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02)),
+        radial-gradient(circle at 20% 0%, rgba(126,231,135,.14), transparent 30%);
+      border:1px solid rgba(255,255,255,.08);
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,.15), 0 16px 40px rgba(0,0,0,.28);
+    }
+
+    #editorCanvas{
+      width:min(72vmin, 640px);
+      height:min(72vmin, 640px);
+      display:block;
+      image-rendering: pixelated;
+      border-radius: 14px;
+      cursor: crosshair;
+      background:
+        linear-gradient(45deg, rgba(255,255,255,.06) 25%, transparent 25%) 0 0 / 20px 20px,
+        linear-gradient(-45deg, rgba(255,255,255,.06) 25%, transparent 25%) 0 10px / 20px 20px,
+        linear-gradient(45deg, transparent 75%, rgba(255,255,255,.06) 75%) 10px -10px / 20px 20px,
+        linear-gradient(-45deg, transparent 75%, rgba(255,255,255,.06) 75%) 10px 0 / 20px 20px,
+        rgba(255,255,255,.02);
+    }
+
+    .cursor-info{
+      position:absolute;
+      top:10px;
+      left:10px;
+      pointer-events:none;
+      background: rgba(0,0,0,.45);
+      border:1px solid rgba(255,255,255,.10);
+      color:#fff;
+      border-radius: 999px;
+      padding:7px 12px;
+      font-size:12px;
+      backdrop-filter: blur(8px);
+    }
+
+    .footer-note{
+      width:100%;
+      text-align:center;
+      color:var(--muted);
+      font-size:13px;
+      padding-bottom:4px;
+    }
+
+    .preview{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+
+    #previewCanvas{
+      width:100%;
+      aspect-ratio:1;
+      background:
+        linear-gradient(45deg, rgba(255,255,255,.06) 25%, transparent 25%) 0 0 / 16px 16px,
+        linear-gradient(-45deg, rgba(255,255,255,.06) 25%, transparent 25%) 0 8px / 16px 16px,
+        linear-gradient(45deg, transparent 75%, rgba(255,255,255,.06) 75%) 8px -8px / 16px 16px,
+        linear-gradient(-45deg, transparent 75%, rgba(255,255,255,.06) 75%) 8px 0 / 16px 16px,
+        rgba(255,255,255,.02);
+      border-radius: 18px;
+      border:1px solid rgba(255,255,255,.10);
+      image-rendering: pixelated;
+    }
+
+    .status-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+      font-size:13px;
+      color:var(--muted);
+    }
+    .status{
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:16px;
+      padding:10px 12px;
+      background: rgba(255,255,255,.03);
+    }
+
+    .row{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .small{
+      font-size:12px;
+      color:var(--muted);
+    }
+
+    .hidden{
+      display:none !important;
+    }
+
+    .splash{
+      position:fixed;
+      inset:0;
+      z-index:20;
+      background:
+        radial-gradient(circle at center, rgba(46,79,47,.85) 0 16%, rgba(8,12,9,.98) 60%, rgba(0,0,0,1) 100%);
+      display:grid;
+      place-items:center;
+      overflow:hidden;
+    }
+
+    .splash-inner{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:18px;
+      text-align:center;
+      transform: translateY(-10px);
+    }
+
+    .block{
+      width:96px;
+      height:96px;
+      position:relative;
+      transform: translateZ(0);
+      filter: drop-shadow(0 18px 26px rgba(0,0,0,.5));
+      animation: shake 1s ease-in-out infinite;
+    }
+
+    .block .top,
+    .block .side,
+    .block .front{
+      position:absolute;
+      inset:0;
+      border-radius:16px;
+      image-rendering: pixelated;
+      background:
+        linear-gradient(180deg, #6fc45f 0 18px, #7bb95f 18px 22px, #3b7a34 22px 100%);
+      box-shadow: inset 0 -16px 0 rgba(0,0,0,.12);
+    }
+    .block .side{
+      transform: translate(18px,18px) skewY(-18deg) scaleY(.86);
+      background:
+        linear-gradient(180deg, #99714c 0 22px, #6f4d31 22px 100%);
+      opacity:.9;
+    }
+    .block .front{
+      transform: translate(0,22px);
+      background:
+        linear-gradient(180deg, #7f5a3d 0 24px, #5d422d 24px 100%);
+    }
+    .block::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      border-radius:16px;
+      background:
+        linear-gradient(90deg, rgba(0,0,0,.08) 0 6px, transparent 6px 12px),
+        linear-gradient(180deg, rgba(255,255,255,.12) 0 6px, transparent 6px 12px);
+      mix-blend-mode: overlay;
+      opacity:.7;
+    }
+
+    .explode-particles{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+    }
+    .particle{
+      position:absolute;
+      width:14px;
+      height:14px;
+      background: linear-gradient(180deg, #86e06b, #5fa83b);
+      border-radius:3px;
+      box-shadow: inset 0 -2px 0 rgba(0,0,0,.2);
+      opacity:0;
+    }
+
+    .splash h2{
+      margin:0;
+      font-size: clamp(28px, 5vw, 64px);
+      letter-spacing:1px;
+      text-shadow: 0 8px 30px rgba(0,0,0,.55);
+    }
+    .splash p{
+      margin:0;
+      color:#cfe0ce;
+      max-width:560px;
+      padding:0 20px;
+      line-height:1.5;
+    }
+
+    .splash.fade-out{
+      animation: fadeOut .55s ease forwards;
+    }
+    .splash.fade-out .block{
+      animation: explode .55s ease forwards;
+    }
+    .splash.fade-out .particle{
+      animation: particle .6s ease forwards;
+    }
+
+    @keyframes shake{
+      0%,100%{transform:translateY(0) rotate(0)}
+      20%{transform:translateY(1px) rotate(-1deg)}
+      40%{transform:translateY(-1px) rotate(1deg)}
+      60%{transform:translateY(1px) rotate(-.5deg)}
+      80%{transform:translateY(0) rotate(.5deg)}
+    }
+    @keyframes explode{
+      0%{transform:scale(1) rotate(0); opacity:1}
+      50%{transform:scale(1.15) rotate(8deg); opacity:.9}
+      100%{transform:scale(0) rotate(35deg); opacity:0}
+    }
+    @keyframes particle{
+      0%{opacity:0; transform:translate(0,0) scale(.5)}
+      20%{opacity:1}
+      100%{opacity:0; transform: translate(var(--dx), var(--dy)) scale(1.2)}
+    }
+    @keyframes fadeOut{
+      from{opacity:1}
+      to{opacity:0; visibility:hidden}
+    }
+
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+
+    .hint{
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.45;
+    }
+
+    .divider{
+      height:1px;
+      background:var(--line);
+      margin:6px 0;
+    }
+
+    .kbd{
+      display:inline-block;
+      padding:2px 7px;
+      border:1px solid rgba(255,255,255,.12);
+      border-bottom-width:2px;
+      border-radius:8px;
+      background:rgba(255,255,255,.06);
+      color:#fff;
+      font-size:12px;
+    }
+
+    @media (max-width: 1100px){
+      body{overflow:auto}
+      .main{
+        grid-template-columns: 1fr;
+        height:auto;
+        overflow:visible;
+      }
+      .left-col, .right-col{flex-direction:row; flex-wrap:wrap}
+      .panel{min-height:auto}
+      .panel-body{height:auto}
+      #editorCanvas{width:min(86vw, 640px); height:min(86vw, 640px)}
+    }
+  </style>
+</head>
+<body>
+  <div class="splash" id="splash">
+    <div class="splash-inner">
+      <div style="position:relative;width:160px;height:160px">
+        <div class="block" id="splashBlock">
+          <div class="side"></div>
+          <div class="front"></div>
+          <div class="top"></div>
+        </div>
+        <div class="explode-particles" id="particles"></div>
+      </div>
+      <h2>Minecraft Pixeler</h2>
+      <p>Skins pixeln, Farben ziehen, PNG herunterladen — alles direkt im Browser.</p>
+    </div>
+  </div>
+
+  <div class="app hidden" id="app">
+    <div class="topbar">
+      <div class="brand">
+        <h1>Minecraft Pixeler</h1>
+        <p>64×64 Skin-Editor mit Download, Import, Undo/Redo und einfacher Pixel-Steuerung.</p>
+      </div>
+      <div class="top-actions">
+        <button class="btn" id="undoBtn">Undo</button>
+        <button class="btn" id="redoBtn">Redo</button>
+        <button class="btn danger" id="clearBtn">Leeren</button>
+        <button class="btn primary" id="downloadBtn">PNG herunterladen</button>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="panel left-col">
+        <div>
+          <div class="panel-header">
+            <h2>Werkzeuge</h2>
+            <small>Pixel für Pixel</small>
+          </div>
+          <div class="panel-body section">
+            <div class="tool-grid">
+              <button class="tool active" data-tool="brush">Pinsel</button>
+              <button class="tool" data-tool="eraser">Radierer</button>
+              <button class="tool" data-tool="eyedropper">Pipette</button>
+              <button class="tool" data-tool="fill">Füllen</button>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="field">
+              <div class="label-row">
+                <span>Farbe</span>
+                <span id="hexLabel">#5fd34e</span>
+              </div>
+              <div class="color-row">
+                <input type="color" id="colorPicker" value="#5fd34e" />
+                <input type="text" id="hexInput" value="#5fd34e" maxlength="7" />
+              </div>
+            </div>
+
+            <div class="section">
+              <div class="label-row">
+                <span>Palette</span>
+                <span class="small">Minecraft-Style</span>
+              </div>
+              <div class="palette" id="palette"></div>
+            </div>
+
+            <div class="section">
+              <div class="label-row">
+                <span>Zoom</span>
+                <span id="zoomLabel">10×</span>
+              </div>
+              <input type="range" id="zoomSlider" min="6" max="18" value="10" />
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="panel-header">
+            <h2>Tastatur</h2>
+            <small>Bequeme Steuerung</small>
+          </div>
+          <div class="panel-body">
+            <div class="hint">
+              <div><span class="kbd">Z</span> Undo</div>
+              <div style="margin-top:8px;"><span class="kbd">Y</span> Redo</div>
+              <div style="margin-top:8px;">Mit gedrückter Maustaste oder Finger malen.</div>
+              <div style="margin-top:8px;">Pipette: auf einen Pixel klicken und Farbe übernehmen.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel stage">
+        <div class="editor-shell">
+          <div class="editor-card">
+            <div class="canvas-wrap">
+              <div class="canvas-holder">
+                <div class="cursor-info" id="cursorInfo">x: –, y: –</div>
+                <canvas id="editorCanvas" width="640" height="640"></canvas>
+              </div>
+            </div>
+            <div class="footer-note">
+              Das ist die echte 64×64-Datei-Logik. Jeder Pixel kann geändert werden.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel right-col">
+        <div>
+          <div class="panel-header">
+            <h2>Preview & Export</h2>
+            <small>So sieht die Skin-Datei aus</small>
+          </div>
+          <div class="panel-body preview">
+            <canvas id="previewCanvas" width="256" height="256"></canvas>
+
+            <div class="status-grid">
+              <div class="status">
+                <strong>Dateiname</strong><br>
+                <span class="small">Minecraft Skin PNG</span>
+              </div>
+              <div class="status">
+                <strong>Format</strong><br>
+                <span class="small">64×64 PNG</span>
+              </div>
+            </div>
+
+            <div class="field">
+              <div class="label-row">
+                <span>Downloadname</span>
+                <span class="small">.png</span>
+              </div>
+              <input type="text" id="filenameInput" value="my-minecraft-skin.png" />
+            </div>
+
+            <div class="row">
+              <button class="btn primary" id="importBtn">PNG importieren</button>
+              <input type="file" id="importFile" accept="image/png,image/*" class="hidden" />
+            </div>
+
+            <div class="row">
+              <button class="btn" id="toggleGridBtn">Grid: an</button>
+              <button class="btn" id="toggleGuideBtn">Guide: an</button>
+            </div>
+
+            <div class="hint">
+              Die Datei wird als echtes PNG exportiert. Transparenz bleibt erhalten.
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="panel-header">
+            <h2>So funktioniert es</h2>
+            <small>kurz & wichtig</small>
+          </div>
+          <div class="panel-body">
+            <div class="hint">
+              Du malst auf einem 64×64-Pixel-Skin. Beim Download wird genau diese Pixelmatrix als PNG gespeichert.
+              Wenn du willst, kann man später noch ein 3D-Preview oder Layer-Editor dazubauen.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SIZE = 64;
+    const DRAW_SCALE = 10;
+    const EXPORT_SIZE = 64;
+
+    const editorCanvas = document.getElementById("editorCanvas");
+    const ectx = editorCanvas.getContext("2d", { willReadFrequently: true });
+
+    const previewCanvas = document.getElementById("previewCanvas");
+    const pctx = previewCanvas.getContext("2d", { willReadFrequently: true });
+
+    const splash = document.getElementById("splash");
+    const app = document.getElementById("app");
+    const particles = document.getElementById("particles");
+
+    const colorPicker = document.getElementById("colorPicker");
+    const hexInput = document.getElementById("hexInput");
+    const hexLabel = document.getElementById("hexLabel");
+    const paletteEl = document.getElementById("palette");
+
+    const zoomSlider = document.getElementById("zoomSlider");
+    const zoomLabel = document.getElementById("zoomLabel");
+    const filenameInput = document.getElementById("filenameInput");
+    const cursorInfo = document.getElementById("cursorInfo");
+
+    const undoBtn = document.getElementById("undoBtn");
+    const redoBtn = document.getElementById("redoBtn");
+    const clearBtn = document.getElementById("clearBtn");
+    const downloadBtn = document.getElementById("downloadBtn");
+    const importBtn = document.getElementById("importBtn");
+    const importFile = document.getElementById("importFile");
+    const toggleGridBtn = document.getElementById("toggleGridBtn");
+    const toggleGuideBtn = document.getElementById("toggleGuideBtn");
+
+    const toolButtons = [...document.querySelectorAll("[data-tool]")];
+
+    const palette = [
+      "#ffffff", "#c7d0d9", "#7f8a93", "#30343b",
+      "#ff5d5d", "#ff9f43", "#ffd166", "#7ee787",
+      "#4cc9f0", "#6bb6ff", "#b48cff", "#ff7ad9",
+      "#7a4f2b", "#a06f43", "#5a7a34", "#2f4f2f"
+    ];
+
+    let pixels = new Array(SIZE * SIZE).fill(null);
+    let currentTool = "brush";
+    let currentColor = "#5fd34e";
+    let isDrawing = false;
+    let lastIndex = -1;
+    let showGrid = true;
+    let showGuide = true;
+    let undoStack = [];
+    let redoStack = [];
+
+    const guideRects = [
+      { x: 24, y: 0, w: 8, h: 8 },   // head front-ish
+      { x: 24, y: 8, w: 8, h: 12 },  // body
+      { x: 20, y: 8, w: 4, h: 12 },  // arm
+      { x: 32, y: 8, w: 4, h: 12 },  // arm
+      { x: 24, y: 20, w: 4, h: 12 },  // leg
+      { x: 28, y: 20, w: 4, h: 12 }   // leg
+    ];
+
+    function clamp(n, min, max){
+      return Math.max(min, Math.min(max, n));
+    }
+
+    function normalizeHex(hex){
+      if (!hex) return "#000000";
+      let h = String(hex).trim();
+      if (h[0] !== "#") h = "#" + h;
+      if (h.length === 4){
+        h = "#" + h[1] + h[1] + h[2] + h[2] + h[3] + h[3];
+      }
+      return /^#[0-9a-fA-F]{6}$/.test(h) ? h.toLowerCase() : "#000000";
+    }
+
+    function copyState(arr){
+      return arr.slice();
+    }
+
+    function pushUndo(){
+      undoStack.push(copyState(pixels));
+      if (undoStack.length > 60) undoStack.shift();
+      redoStack = [];
+    }
+
+    function setTool(tool){
+      currentTool = tool;
+      toolButtons.forEach(b => b.classList.toggle("active", b.dataset.tool === tool));
+    }
+
+    function setColor(hex){
+      currentColor = normalizeHex(hex);
+      colorPicker.value = currentColor;
+      hexInput.value = currentColor;
+      hexLabel.textContent = currentColor;
+      document.querySelectorAll(".color-btn").forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.color === currentColor);
+      });
+    }
+
+    function idx(x, y){
+      return y * SIZE + x;
+    }
+
+    function getPixel(x, y){
+      if (x < 0 || y < 0 || x >= SIZE || y >= SIZE) return null;
+      return pixels[idx(x, y)];
+    }
+
+    function setPixel(x, y, color){
+      if (x < 0 || y < 0 || x >= SIZE || y >= SIZE) return;
+      pixels[idx(x, y)] = color;
+    }
+
+    function drawCheckerBackground(){
+      // Canvas background is handled via CSS for transparency.
+    }
+
+    function drawGrid(){
+      if (!showGrid) return;
+      ectx.save();
+      ectx.strokeStyle = "rgba(255,255,255,.12)";
+      ectx.lineWidth = 1;
+      for (let i = 0; i <= SIZE; i++){
+        const p = i * DRAW_SCALE;
+        ectx.beginPath();
+        ectx.moveTo(p + 0.5, 0);
+        ectx.lineTo(p + 0.5, SIZE * DRAW_SCALE);
+        ectx.stroke();
+
+        ectx.beginPath();
+        ectx.moveTo(0, p + 0.5);
+        ectx.lineTo(SIZE * DRAW_SCALE, p + 0.5);
+        ectx.stroke();
+      }
+      ectx.restore();
+    }
+
+    function drawGuide(){
+      if (!showGuide) return;
+      ectx.save();
+      ectx.strokeStyle = "rgba(126,231,135,.45)";
+      ectx.lineWidth = 2;
+      ectx.setLineDash([8, 6]);
+      guideRects.forEach(r => {
+        ectx.strokeRect(r.x * DRAW_SCALE + 1, r.y * DRAW_SCALE + 1, r.w * DRAW_SCALE - 2, r.h * DRAW_SCALE - 2);
+      });
+      ectx.restore();
+    }
+
+    function render(){
+      ectx.clearRect(0, 0, editorCanvas.width, editorCanvas.height);
+
+      // transparent pixels stay transparent; CSS background shows checkerboard
+      for (let y = 0; y < SIZE; y++){
+        for (let x = 0; x < SIZE; x++){
+          const c = pixels[idx(x, y)];
+          if (!c) continue;
+          ectx.fillStyle = c;
+          ectx.fillRect(x * DRAW_SCALE, y * DRAW_SCALE, DRAW_SCALE, DRAW_SCALE);
+        }
+      }
+
+      drawGrid();
+      drawGuide();
+      renderPreview();
+    }
+
+    function renderPreview(){
+      pctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+
+      const scale = previewCanvas.width / SIZE;
+      for (let y = 0; y < SIZE; y++){
+        for (let x = 0; x < SIZE; x++){
+          const c = pixels[idx(x, y)];
+          if (!c) continue;
+          pctx.fillStyle = c;
+          pctx.fillRect(x * scale, y * scale, scale, scale);
+        }
+      }
+
+      if (showGrid){
+        pctx.save();
+        pctx.strokeStyle = "rgba(255,255,255,.10)";
+        pctx.lineWidth = 1;
+        for (let i = 0; i <= SIZE; i += 4){
+          const p = i * scale;
+          pctx.beginPath();
+          pctx.moveTo(p + 0.5, 0);
+          pctx.lineTo(p + 0.5, previewCanvas.height);
+          pctx.stroke();
+
+          pctx.beginPath();
+          pctx.moveTo(0, p + 0.5);
+          pctx.lineTo(previewCanvas.width, p + 0.5);
+          pctx.stroke();
+        }
+        pctx.restore();
+      }
+    }
+
+    function canvasPosToPixel(event){
+      const rect = editorCanvas.getBoundingClientRect();
+      const x = Math.floor(((event.clientX - rect.left) / rect.width) * SIZE);
+      const y = Math.floor(((event.clientY - rect.top) / rect.height) * SIZE);
+      return { x: clamp(x, 0, SIZE - 1), y: clamp(y, 0, SIZE - 1) };
+    }
+
+    function updateCursor(event){
+      const { x, y } = canvasPosToPixel(event);
+      cursorInfo.textContent = `x: ${x}, y: ${y}`;
+    }
+
+    function floodFill(startX, startY, newColor){
+      const target = getPixel(startX, startY);
+      if (target === newColor) return;
+      const stack = [[startX, startY]];
+      const visited = new Set();
+
+      while (stack.length){
+        const [x, y] = stack.pop();
+        const key = x + "," + y;
+        if (visited.has(key)) continue;
+        visited.add(key);
+
+        if (x < 0 || y < 0 || x >= SIZE || y >= SIZE) continue;
+        if (getPixel(x, y) !== target) continue;
+
+        setPixel(x, y, newColor);
+        stack.push([x + 1, y]);
+        stack.push([x - 1, y]);
+        stack.push([x, y + 1]);
+        stack.push([x, y - 1]);
+      }
+    }
+
+    function paintAt(event, force = false){
+      const { x, y } = canvasPosToPixel(event);
+      const i = idx(x, y);
+
+      if (!force && i === lastIndex && currentTool !== "fill") return;
+      lastIndex = i;
+
+      if (currentTool === "eyedropper"){
+        const c = getPixel(x, y);
+        if (c){
+          setColor(c);
+        }
+        return;
+      }
+
+      if (currentTool === "brush"){
+        setPixel(x, y, currentColor);
+      } else if (currentTool === "eraser"){
+        setPixel(x, y, null);
+      } else if (currentTool === "fill"){
+        pushUndo();
+        floodFill(x, y, currentTool === "eraser" ? null : currentColor);
+        render();
+      }
+
+      if (currentTool !== "fill"){
+        render();
+      }
+    }
+
+    function exportPNG(){
+      const exportCanvas = document.createElement("canvas");
+      exportCanvas.width = EXPORT_SIZE;
+      exportCanvas.height = EXPORT_SIZE;
+      const xctx = exportCanvas.getContext("2d", { willReadFrequently: true });
+      xctx.imageSmoothingEnabled = false;
+
+      for (let y = 0; y < SIZE; y++){
+        for (let x = 0; x < SIZE; x++){
+          const c = pixels[idx(x, y)];
+          if (!c) continue;
+          xctx.fillStyle = c;
+          xctx.fillRect(x, y, 1, 1);
+        }
+      }
+
+      return exportCanvas.toDataURL("image/png");
+    }
+
+    function downloadSkin(){
+      const link = document.createElement("a");
+      link.href = exportPNG();
+      const name = filenameInput.value.trim() || "minecraft-skin.png";
+      link.download = name.toLowerCase().endsWith(".png") ? name : `${name}.png`;
+      link.click();
+    }
+
+    function clearSkin(){
+      pushUndo();
+      pixels = new Array(SIZE * SIZE).fill(null);
+      render();
+    }
+
+    function undo(){
+      if (!undoStack.length) return;
+      redoStack.push(copyState(pixels));
+      pixels = undoStack.pop();
+      render();
+    }
+
+    function redo(){
+      if (!redoStack.length) return;
+      undoStack.push(copyState(pixels));
+      pixels = redoStack.pop();
+      render();
+    }
+
+    function createPalette(){
+      paletteEl.innerHTML = "";
+      palette.forEach(col => {
+        const b = document.createElement("button");
+        b.className = "color-btn";
+        b.dataset.color = col;
+        b.style.background = col;
+        b.title = col;
+        if (col.toLowerCase() === currentColor.toLowerCase()) b.classList.add("active");
+        b.addEventListener("click", () => setColor(col));
+        paletteEl.appendChild(b);
+      });
+    }
+
+    function applyZoom(value){
+      const px = `${value}px`;
+      document.documentElement.style.setProperty("--pixel", px);
+      zoomLabel.textContent = `${value}×`;
+      editorCanvas.style.width = `min(86vw, ${SIZE * value}px)`;
+      editorCanvas.style.height = `min(86vw, ${SIZE * value}px)`;
+    }
+
+    function importImage(file){
+      const img = new Image();
+      img.onload = () => {
+        pushUndo();
+
+        const off = document.createElement("canvas");
+        off.width = SIZE;
+        off.height = SIZE;
+        const octx = off.getContext("2d", { willReadFrequently: true });
+        octx.clearRect(0, 0, SIZE, SIZE);
+        octx.imageSmoothingEnabled = false;
+        octx.drawImage(img, 0, 0, SIZE, SIZE);
+
+        const data = octx.getImageData(0, 0, SIZE, SIZE).data;
+        pixels = new Array(SIZE * SIZE).fill(null);
+
+        for (let y = 0; y < SIZE; y++){
+          for (let x = 0; x < SIZE; x++){
+            const p = (y * SIZE + x) * 4;
+            const r = data[p];
+            const g = data[p + 1];
+            const b = data[p + 2];
+            const a = data[p + 3];
+            if (a === 0) continue;
+            pixels[idx(x, y)] = `rgba(${r}, ${g}, ${b}, ${+(a / 255).toFixed(3)})`;
+          }
+        }
+        render();
+      };
+      img.src = URL.createObjectURL(file);
+    }
+
+    function bootstrapParticles(){
+      particles.innerHTML = "";
+      const positions = [
+        [-50, -25], [40, -40], [70, -5], [-70, 30], [20, 65], [90, 42],
+        [-95, -10], [110, 0], [0, -85], [55, 95], [-20, 110], [140, -20]
+      ];
+
+      positions.forEach(([dx, dy], i) => {
+        const p = document.createElement("div");
+        p.className = "particle";
+        p.style.left = `${72 + (Math.random() * 24 - 12)}px`;
+        p.style.top = `${72 + (Math.random() * 24 - 12)}px`;
+        p.style.setProperty("--dx", `${dx}px`);
+        p.style.setProperty("--dy", `${dy}px`);
+        p.style.animationDelay = `${i * 18}ms`;
+        particles.appendChild(p);
+      });
+    }
+
+    function finishSplash(){
+      splash.classList.add("fade-out");
+      setTimeout(() => {
+        splash.remove();
+        app.classList.remove("hidden");
+      }, 560);
+    }
+
+    // Events
+    toolButtons.forEach(btn => {
+      btn.addEventListener("click", () => setTool(btn.dataset.tool));
+    });
+
+    colorPicker.addEventListener("input", () => setColor(colorPicker.value));
+    hexInput.addEventListener("change", () => setColor(hexInput.value));
+
+    zoomSlider.addEventListener("input", () => applyZoom(Number(zoomSlider.value)));
+
+    editorCanvas.addEventListener("pointerdown", (e) => {
+      pushUndo();
+      isDrawing = true;
+      editorCanvas.setPointerCapture(e.pointerId);
+      paintAt(e, true);
+    });
+
+    editorCanvas.addEventListener("pointermove", (e) => {
+      updateCursor(e);
+      if (!isDrawing) return;
+      if (currentTool === "brush" || currentTool === "eraser") {
+        paintAt(e);
+      } else if (currentTool === "eyedropper") {
+        paintAt(e);
+      }
+    });
+
+    editorCanvas.addEventListener("pointerup", () => {
+      isDrawing = false;
+      lastIndex = -1;
+    });
+
+    editorCanvas.addEventListener("pointerleave", () => {
+      isDrawing = false;
+      lastIndex = -1;
+      cursorInfo.textContent = "x: –, y: –";
+    });
+
+    editorCanvas.addEventListener("contextmenu", (e) => e.preventDefault());
+
+    undoBtn.addEventListener("click", undo);
+    redoBtn.addEventListener("click", redo);
+    clearBtn.addEventListener("click", clearSkin);
+    downloadBtn.addEventListener("click", downloadSkin);
+
+    importBtn.addEventListener("click", () => importFile.click());
+    importFile.addEventListener("change", () => {
+      const file = importFile.files && importFile.files[0];
+      if (file) importImage(file);
+      importFile.value = "";
+    });
+
+    toggleGridBtn.addEventListener("click", () => {
+      showGrid = !showGrid;
+      toggleGridBtn.textContent = `Grid: ${showGrid ? "an" : "aus"}`;
+      render();
+    });
+
+    toggleGuideBtn.addEventListener("click", () => {
+      showGuide = !showGuide;
+      toggleGuideBtn.textContent = `Guide: ${showGuide ? "an" : "aus"}`;
+      render();
+    });
+
+    window.addEventListener("keydown", (e) => {
+      const key = e.key.toLowerCase();
+      if (key === "z") undo();
+      if (key === "y") redo();
+      if (key === "b") setTool("brush");
+      if (key === "e") setTool("eraser");
+      if (key === "p") setTool("eyedropper");
+      if (key === "f") setTool("fill");
+    });
+
+    // Init
+    createPalette();
+    setColor("#5fd34e");
+    applyZoom(Number(zoomSlider.value));
+    render();
+    bootstrapParticles();
+
+    setTimeout(() => {
+      splash.classList.add("fade-out");
+      setTimeout(() => {
+        splash.remove();
+        app.classList.remove("hidden");
+      }, 560);
+    }, 1500);
+  </script>
+</body>
+</html>
