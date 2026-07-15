@@ -1,0 +1,21 @@
+{
+  "name": "minecraft-pixeler",
+  "version": "1.0.0",
+  "description": "Professional Minecraft Skin Editor - Create, Edit & Export Skins",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint src --ext .js,.jsx"
+  },
+  "dependencies": {
+    "three": "^r128",
+    "gsap": "^3.12.2",
+    "colord": "^2.9.3"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0",
+    "@vitejs/plugin-basic-ssl": "^1.1.0"
+  }
+}

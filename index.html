@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft Pixeler - Skin Editor</title>
+    <link rel="stylesheet" href="src/styles/main.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Startanimation -->
+        <div id="startAnimation" class="start-animation">
+            <div class="grass-block-container">
+                <div class="grass-block"></div>
+                <div class="mining-particles"></div>
+            </div>
+            <div class="title-overlay">
+                <h1 class="minecraft-title">Minecraft Pixeler</h1>
+            </div>
+        </div>
+
+        <!-- Hauptanwendung -->
+        <div id="mainApp" class="main-app hidden">
+            <!-- Hintergrund -->
+            <div class="background-container">
+                <div class="background" id="mainBackground"></div>
+                <div class="background-overlay"></div>
+            </div>
+
+            <!-- Editor Container -->
+            <div class="editor-container">
+                <!-- Linke Seite - Werkzeuge -->
+                <div class="sidebar sidebar-left">
+                    <div class="panel">
+                        <h3>Werkzeuge</h3>
+                        <div class="tool-grid" id="toolGrid"></div>
+                    </div>
+
+                    <div class="panel">
+                        <h3>Farben</h3>
+                        <div class="color-section">
+                            <div class="color-wheel-container">
+                                <input type="color" id="colorInput" class="color-picker">
+                            </div>
+                            <div class="color-formats">
+                                <input type="text" id="hexInput" placeholder="#000000" class="format-input">
+                                <input type="text" id="rgbInput" placeholder="RGB" class="format-input">
+                            </div>
+                            <div class="alpha-slider">
+                                <label>Transparenz</label>
+                                <input type="range" id="alphaSlider" min="0" max="100" value="100">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <h3>Pinselgröße</h3>
+                        <input type="range" id="brushSize" min="1" max="20" value="1" class="slider">
+                        <span id="brushSizeDisplay">1px</span>
+                    </div>
+
+                    <div class="panel">
+                        <h3>Zoom</h3>
+                        <input type="range" id="zoomSlider" min="1" max="20" value="10" class="slider">
+                        <span id="zoomDisplay">10x</span>
+                    </div>
+
+                    <div class="panel">
+                        <h3>Ebenen</h3>
+                        <div class="layers-container" id="layersContainer"></div>
+                    </div>
+
+                    <div class="panel">
+                        <h3>Skinteile</h3>
+                        <div class="skin-parts" id="skinParts"></div>
+                    </div>
+                </div>
+
+                <!-- Mitte - Editor -->
+                <div class="editor-main">
+                    <div class="editor-toolbar">
+                        <button id="undoBtn" class="toolbar-btn" title="Rückgängig (Ctrl+Z)">↶</button>
+                        <button id="redoBtn" class="toolbar-btn" title="Wiederholen (Ctrl+Y)">↷</button>
+                        <button id="clearBtn" class="toolbar-btn" title="Löschen">🗑️</button>
+                        <button id="gridToggle" class="toolbar-btn" title="Gitter (G)">⊞</button>
+                    </div>
+                    <div class="canvas-container">
+                        <canvas id="pixelCanvas" width="64" height="64"></canvas>
+                    </div>
+                </div>
+
+                <!-- Rechte Seite - Vorschau & Info -->
+                <div class="sidebar sidebar-right">
+                    <div class="panel">
+                        <h3>3D-Vorschau</h3>
+                        <div id="preview3d" class="preview-3d"></div>
+                    </div>
+
+                    <div class="panel">
+                        <h3>Import/Export</h3>
+                        <div class="import-export">
+                            <button id="importBtn" class="action-btn">📁 Importieren</button>
+                            <button id="exportBtn" class="action-btn">💾 Exportieren</button>
+                            <button id="copyBtn" class="action-btn">📋 Kopieren</button>
+                        </div>
+                        <input type="file" id="fileInput" accept=".png" style="display: none;">
+                    </div>
+
+                    <div class="panel">
+                        <h3>Einstellungen</h3>
+                        <div class="settings">
+                            <label>
+                                <input type="checkbox" id="slimArms" checked>
+                                Slim Arms
+                            </label>
+                            <label>
+                                <input type="checkbox" id="autoSave" checked>
+                                Auto-Save
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="src/js/main.js"></script>
+</body>
+</html>
