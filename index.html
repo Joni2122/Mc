@@ -1,129 +1,113 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minecraft Pixeler - Skin Editor</title>
-    <link rel="stylesheet" href="src/styles/main.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Minecraft Pixeler - Professional Skin Editor</title>
+  <link rel="stylesheet" href="/src/styles/main.css" />
 </head>
 <body>
-    <div id="app">
-        <!-- Startanimation -->
-        <div id="startAnimation" class="start-animation">
-            <div class="grass-block-container">
-                <div class="grass-block"></div>
-                <div class="mining-particles"></div>
-            </div>
-            <div class="title-overlay">
-                <h1 class="minecraft-title">Minecraft Pixeler</h1>
-            </div>
-        </div>
 
-        <!-- Hauptanwendung -->
-        <div id="mainApp" class="main-app hidden">
-            <!-- Hintergrund -->
-            <div class="background-container">
-                <div class="background" id="mainBackground"></div>
-                <div class="background-overlay"></div>
-            </div>
-
-            <!-- Editor Container -->
-            <div class="editor-container">
-                <!-- Linke Seite - Werkzeuge -->
-                <div class="sidebar sidebar-left">
-                    <div class="panel">
-                        <h3>Werkzeuge</h3>
-                        <div class="tool-grid" id="toolGrid"></div>
-                    </div>
-
-                    <div class="panel">
-                        <h3>Farben</h3>
-                        <div class="color-section">
-                            <div class="color-wheel-container">
-                                <input type="color" id="colorInput" class="color-picker">
-                            </div>
-                            <div class="color-formats">
-                                <input type="text" id="hexInput" placeholder="#000000" class="format-input">
-                                <input type="text" id="rgbInput" placeholder="RGB" class="format-input">
-                            </div>
-                            <div class="alpha-slider">
-                                <label>Transparenz</label>
-                                <input type="range" id="alphaSlider" min="0" max="100" value="100">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="panel">
-                        <h3>Pinselgröße</h3>
-                        <input type="range" id="brushSize" min="1" max="20" value="1" class="slider">
-                        <span id="brushSizeDisplay">1px</span>
-                    </div>
-
-                    <div class="panel">
-                        <h3>Zoom</h3>
-                        <input type="range" id="zoomSlider" min="1" max="20" value="10" class="slider">
-                        <span id="zoomDisplay">10x</span>
-                    </div>
-
-                    <div class="panel">
-                        <h3>Ebenen</h3>
-                        <div class="layers-container" id="layersContainer"></div>
-                    </div>
-
-                    <div class="panel">
-                        <h3>Skinteile</h3>
-                        <div class="skin-parts" id="skinParts"></div>
-                    </div>
-                </div>
-
-                <!-- Mitte - Editor -->
-                <div class="editor-main">
-                    <div class="editor-toolbar">
-                        <button id="undoBtn" class="toolbar-btn" title="Rückgängig (Ctrl+Z)">↶</button>
-                        <button id="redoBtn" class="toolbar-btn" title="Wiederholen (Ctrl+Y)">↷</button>
-                        <button id="clearBtn" class="toolbar-btn" title="Löschen">🗑️</button>
-                        <button id="gridToggle" class="toolbar-btn" title="Gitter (G)">⊞</button>
-                    </div>
-                    <div class="canvas-container">
-                        <canvas id="pixelCanvas" width="64" height="64"></canvas>
-                    </div>
-                </div>
-
-                <!-- Rechte Seite - Vorschau & Info -->
-                <div class="sidebar sidebar-right">
-                    <div class="panel">
-                        <h3>3D-Vorschau</h3>
-                        <div id="preview3d" class="preview-3d"></div>
-                    </div>
-
-                    <div class="panel">
-                        <h3>Import/Export</h3>
-                        <div class="import-export">
-                            <button id="importBtn" class="action-btn">📁 Importieren</button>
-                            <button id="exportBtn" class="action-btn">💾 Exportieren</button>
-                            <button id="copyBtn" class="action-btn">📋 Kopieren</button>
-                        </div>
-                        <input type="file" id="fileInput" accept=".png" style="display: none;">
-                    </div>
-
-                    <div class="panel">
-                        <h3>Einstellungen</h3>
-                        <div class="settings">
-                            <label>
-                                <input type="checkbox" id="slimArms" checked>
-                                Slim Arms
-                            </label>
-                            <label>
-                                <input type="checkbox" id="autoSave" checked>
-                                Auto-Save
-                            </label>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+  <!-- Start-Animation -->
+  <div id="start-screen">
+    <div class="grass-block">
+      <div class="grass-top"></div>
+      <div class="grass-side"></div>
     </div>
+    <h1 id="start-title">MINECRAFT PIXELER</h1>
+    <div id="particles"></div>
+  </div>
 
-    <script type="module" src="src/js/main.js"></script>
+  <!-- Hauptapp -->
+  <div id="app" class="hidden">
+
+    <!-- Kopfleiste -->
+    <header id="topbar">
+      <div class="logo">🎮 Minecraft Pixeler</div>
+      <div class="topbar-actions">
+        <button id="btn-import" class="btn">📁 Import</button>
+        <button id="btn-export" class="btn btn-primary">💾 Export</button>
+        <button id="btn-undo" class="btn" title="Ctrl+Z">↩️</button>
+        <button id="btn-redo" class="btn" title="Ctrl+Y">↪️</button>
+      </div>
+    </header>
+
+    <div id="main-layout">
+
+      <!-- Werkzeugleiste -->
+      <aside id="toolbar">
+        <button class="tool active" data-tool="brush" title="Pinsel (B)">🖌️</button>
+        <button class="tool" data-tool="eraser" title="Radierer (E)">🧹</button>
+        <button class="tool" data-tool="bucket" title="Farbeimer (F)">🪣</button>
+        <button class="tool" data-tool="eyedropper" title="Pipette (I)">🔍</button>
+        <button class="tool" data-tool="line" title="Linie">📏</button>
+        <button class="tool" data-tool="rectangle" title="Rechteck">▭</button>
+        <button class="tool" data-tool="circle" title="Kreis">●</button>
+        <button class="tool" data-tool="select" title="Auswahl">⊞</button>
+        <button class="tool" data-tool="mirror" title="Spiegeln">↔️</button>
+        <button class="tool" data-tool="copy" title="Kopieren">📋</button>
+        <hr />
+        <button id="btn-grid" class="tool" title="Gitter (G)">▦</button>
+      </aside>
+
+      <!-- Editor-Bereich -->
+      <main id="editor-area">
+        <div id="zoom-controls">
+          <button id="zoom-out">−</button>
+          <span id="zoom-level">400%</span>
+          <button id="zoom-in">+</button>
+        </div>
+        <div id="canvas-wrapper">
+          <canvas id="skin-canvas" width="64" height="64"></canvas>
+          <canvas id="grid-canvas" width="64" height="64"></canvas>
+        </div>
+        <div id="layer-tabs">
+          <button class="layer-tab active" data-layer="base">Base Layer</button>
+          <button class="layer-tab" data-layer="overlay">Overlay Layer</button>
+          <button id="btn-toggle-layer" title="Ebene ein/ausblenden">👁️</button>
+        </div>
+      </main>
+
+      <!-- 3D-Vorschau -->
+      <section id="preview-panel">
+        <div id="preview-canvas-wrapper">
+          <canvas id="preview-canvas"></canvas>
+        </div>
+        <div class="preview-controls">
+          <button id="btn-auto-rotate" class="btn">🔄 Auto-Rotation</button>
+          <button id="btn-animate" class="btn">🚶 Bewegung</button>
+          <label class="slim-toggle">
+            <input type="checkbox" id="slim-arms" />
+            Slim Arms
+          </label>
+        </div>
+      </section>
+
+      <!-- Farb-Panel -->
+      <aside id="color-panel">
+        <div id="color-wheel-wrapper">
+          <canvas id="color-wheel" width="180" height="180"></canvas>
+        </div>
+        <div class="color-inputs">
+          <label>HEX <input type="text" id="hex-input" value="#FFFFFF" /></label>
+          <div class="rgb-inputs">
+            <label>R <input type="number" id="r-input" min="0" max="255" value="255" /></label>
+            <label>G <input type="number" id="g-input" min="0" max="255" value="255" /></label>
+            <label>B <input type="number" id="b-input" min="0" max="255" value="255" /></label>
+          </div>
+          <label>Alpha
+            <input type="range" id="alpha-input" min="0" max="255" value="255" />
+          </label>
+        </div>
+        <div id="mc-palette" class="palette-grid"></div>
+        <div id="recent-colors" class="palette-grid"></div>
+      </aside>
+
+    </div>
+  </div>
+
+  <input type="file" id="file-input" accept="image/png" hidden />
+
+  <script type="module" src="/src/js/main.js"></script>
 </body>
 </html>
