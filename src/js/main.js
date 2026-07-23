@@ -1,73 +1,76 @@
-import { StartAnimation } from './animations/startAnimation.js';
+import { playStartAnimation } from './animations/startAnimation.js';
 import { PixelEditor } from './editor/pixelEditor.js';
 import { PreviewRenderer } from './3d/previewRenderer.js';
 import { SkinManager } from './manager/skinManager.js';
 import { UIManager } from './ui/uiManager.js';
-import { KeyboardShortcuts } from './input/keyboardShortcuts.js';
+import { registerShortcuts } from './input/keyboardShortcuts.js';
 
-class MinecraftPixeler {
+/**
+ * App-Einstiegspunkt
+ * Initialisiert alle Module und startet die App nach der Startanimation.
+ */
+class App {
   constructor() {
-    this.startAnimation = null;
-    this.pixelEditor = null;
-    this.previewRenderer = null;
     this.skinManager = null;
-    this.uiManager = null;
-    this.keyboardShortcuts = null;
+    this.editor = null;
+    this.preview = null;
+    this.ui = null;
   }
 
   async init() {
-    console.log('🎮 Initializing Minecraft Pixeler...');
-
     // Startanimation abspielen
-    this.startAnimation = new StartAnimation();
-    await this.startAnimation.play();
+    await playStartAnimation();
 
-    // Hauptanwendung anzeigen
-    document.getElementById('mainApp').classList.remove('hidden');
+    // App-Container sichtbar machen
+    const appEl = document.getElementById('app');
+    const startScreen = document.getElementById('start-screen');
+    appEl.classList.remove('hidden');
+    startScreen.remove();
 
-    // Manager initialisieren
+    // Kern-Module initialisieren
     this.skinManager = new SkinManager();
     await this.skinManager.init();
 
-    // Editor initialisieren
-    this.pixelEditor = new PixelEditor(document.getElementById('pixelCanvas'));
-    this.pixelEditor.init();
+    this.editor = new PixelEditor({
+      canvasId: 'skin-canvas',
+      gridCanvasId: 'grid-canvas',
+      skinManager: this.skinManager
+    });
+    this.editor.init();
 
-    // UI Manager
-    this.uiManager = new UIManager(this.pixelEditor, this.skinManager);
-    this.uiManager.init();
+    this.preview = new PreviewRenderer({
+      canvasId: 'preview-canvas',
+      skinManager: this.skinManager
+    });
+    this.preview.init();
 
-    // 3D Vorschau
-    this.previewRenderer = new PreviewRenderer(document.getElementById('preview3d'), this.pixelEditor);
-    await this.previewRenderer.init();
-    this.previewRenderer.animate();
+    this.ui = new UIManager({
+      editor: this.editor,
+      preview: this.preview,
+      skinManager: this.skinManager
+    });
+    this.ui.init();
 
-    // Tastenkürzel
-    this.keyboardShortcuts = new KeyboardShortcuts(this.pixelEditor, this.skinManager);
-    this.keyboardShortcuts.init();
-
-    // Verbindungen herstellen
-    this.connectModules();
-
-    console.log('✅ Minecraft Pixeler ready!');
-  }
-
-  connectModules() {
-    // Editor -> Vorschau
-    this.pixelEditor.on('pixelChange', () => {
-      this.previewRenderer.updateSkin(this.pixelEditor.getSkinData());
+    // Editor & Preview verbinden: bei jeder Änderung neu rendern
+    this.skinManager.onChange(() => {
+      this.editor.render();
+      this.preview.updateTexture();
     });
 
-    // Editor -> Speichern
-    this.pixelEditor.on('pixelChange', () => {
-      this.skinManager.autoSave(this.pixelEditor.getSkinData());
+    // Tastenkürzel registrieren
+    registerShortcuts({
+      editor: this.editor,
+      ui: this.ui,
+      skinManager: this.skinManager
     });
+
+    // Erste Darstellung
+    this.editor.render();
+    this.preview.updateTexture();
+
+    console.log('%c🎮 Minecraft Pixeler bereit!', 'color:#6abe30;font-weight:bold;');
   }
 }
 
-// App starten
-window.addEventListener('DOMContentLoaded', async () => {
-  const app = new MinecraftPixeler();
-  await app.init();
-  window.app = app;
-});
+const app = new App();
+app.init();
