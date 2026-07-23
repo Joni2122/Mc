@@ -1,50 +1,63 @@
-export class KeyboardShortcuts {
-  constructor(editor, skinManager) {
-    this.editor = editor;
-    this.skinManager = skinManager;
-  }
+/**
+ * Registriert alle Tastenkürzel:
+ * Ctrl+Z Rückgängig, Ctrl+Y Wiederholen,
+ * B Pinsel, E Radierer, F Füllen, I Pipette, G Gitter
+ */
+export function registerShortcuts({ editor, ui, skinManager }) {
+  const toolKeyMap = {
+    b: 'brush',
+    e: 'eraser',
+    f: 'bucket',
+    i: 'eyedropper'
+  };
 
-  init() {
-    window.addEventListener('keydown', (e) => this.handleKeyDown(e));
-  }
+  document.addEventListener('keydown', (e) => {
+    // Nicht auslösen, wenn der Fokus in einem Eingabefeld liegt
+    const activeTag = document.activeElement?.tagName;
+    if (activeTag === 'INPUT' || activeTag === 'TEXTAREA') return;
 
-  handleKeyDown(e) {
-    // Ctrl+Z - Rückgängig
-    if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+    const key = e.key.toLowerCase();
+
+    // Ctrl/Cmd-Kombinationen
+    if (e.ctrlKey || e.metaKey) {
+      if (key === 'z') {
+        e.preventDefault();
+        editor.undo();
+        return;
+      }
+      if (key === 'y') {
+        e.preventDefault();
+        editor.redo();
+        return;
+      }
+      if (key === 'c') {
+        e.preventDefault();
+        editor.copySelection();
+        return;
+      }
+      if (key === 'v') {
+        e.preventDefault();
+        if (editor.clipboard && editor.selection) {
+          editor.pasteAt(editor.selection.x0, editor.selection.y0);
+        }
+        return;
+      }
+    }
+
+    // Werkzeug-Kürzel
+    if (toolKeyMap[key]) {
       e.preventDefault();
-      this.editor.undo();
+      editor.setTool(toolKeyMap[key]);
+      document.querySelectorAll('.tool[data-tool]').forEach((btn) => {
+        btn.classList.toggle('active', btn.dataset.tool === toolKeyMap[key]);
+      });
+      return;
     }
 
-    // Ctrl+Y - Wiederholen
-    if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+    // Gitter umschalten
+    if (key === 'g') {
       e.preventDefault();
-      this.editor.redo();
+      editor.toggleGrid();
     }
-
-    // B - Pinsel
-    if (e.key === 'b' && !e.ctrlKey && !e.metaKey) {
-      this.editor.setTool('brush');
-    }
-
-    // E - Radierer
-    if (e.key === 'e' && !e.ctrlKey && !e.metaKey) {
-      this.editor.setTool('eraser');
-    }
-
-    // F - Füllen
-    if (e.key === 'f' && !e.ctrlKey && !e.metaKey) {
-      this.editor.setTool('bucket');
-    }
-
-    // I - Pipette
-    if (e.key === 'i' && !e.ctrlKey && !e.metaKey) {
-      this.editor.setTool('pipette');
-    }
-
-    // G - Gitter
-    if (e.key === 'g' && !e.ctrlKey && !e.metaKey) {
-      e.preventDefault();
-      this.editor.toggleGrid();
-    }
-  }
+  });
 }
